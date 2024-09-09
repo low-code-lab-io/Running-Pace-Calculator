@@ -1,0 +1,150 @@
+<meta charset="UTF-8">
+<style><!--
+body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .calculator {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .calculator h2 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            text-align: center;
+        }
+        .calculator label {
+            font-size: 1em;
+            margin-bottom: 10px;
+            display: block;
+        }
+        .calculator input[type="number"], .calculator input[type="text"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        .calculator .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .calculator button {
+            padding: 10px 20px;
+            background-color: #bf442e;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .calculator button:hover {
+            background-color: #a43724;
+        }
+        .calculator .clear {
+            margin-top: 10px;
+            background-color: #bf442e;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .results div {
+            font-size: 1em;
+            margin: 10px 0;
+        }
+--></style>
+<div class="calculator">
+<h2></h2>
+<strong>Instructions</strong>
+<ul>
+<li>Fill out any two of the following fields:
+<ul>
+<li><strong>Distance [km]</strong></li>
+<li><strong>Time [h:min:sec</strong><strong>]</strong></li>
+<li><strong>Time/km [min:sec</strong><strong>]</strong></li>
+<li><strong>Pace [km/h]</strong></li>
+</ul>
+</li>
+<li><meta charset="utf-8"> <span>It is important to use this format.</span></li>
+<li>Click the <strong>'Calculate'</strong> button to automatically calculate and display the remaining values.</li>
+<li>If you want to try again just click on the&nbsp;<strong data-mce-fragment="1">'Clear Input'</strong><span data-mce-fragment="1">&nbsp;button.</span></li>
+</ul>
+<label for="distance">Distance [km]:</label> <input type="number" id="distance" placeholder="Enter distance in kilometers" step="0.01"> <label for="time">Time [h:min:sec]:</label> <input type="text" id="time" placeholder="Enter time (h:min:sec)"> <label for="timePerKm">Time/km [min:sec]:</label> <input type="text" id="timePerKm" placeholder="Enter time per kilometer (min:sec)"> <label for="pace">Pace [km/h]:</label> <input type="number" id="pace" placeholder="Enter pace in km/h" step="0.01">
+<div class="button-container"><button onclick="calculatePace()">Calculate</button> <button class="clear" onclick="clearInputs()">Clear Input</button></div>
+<div class="results" id="results"><!-- Results will be displayed here --></div>
+</div>
+<script>
+    function parseTimeToMinutes(timeStr) {
+        let parts = timeStr.split(':').map(Number);
+        return (parts[0] * 60) + parts[1] + (parts[2] / 60);
+    }
+
+    function formatMinutesToTime(minutes) {
+        let totalSeconds = Math.round(minutes * 60);
+        let hours = Math.floor(totalSeconds / 3600);
+        totalSeconds %= 3600;
+        let minutesPart = Math.floor(totalSeconds / 60);
+        let seconds = totalSeconds % 60;
+        return `${hours}:${minutesPart.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function calculatePace() {
+        let distance = parseFloat(document.getElementById('distance').value) || 0;
+        let time = document.getElementById('time').value || "0:0:0";
+        let timePerKm = document.getElementById('timePerKm').value || "0:0";
+        let pace = parseFloat(document.getElementById('pace').value) || 0;
+
+        let results = '';
+
+        if (distance > 0 && time !== "0:0:0") {
+            let timeInMinutes = parseTimeToMinutes(time);
+            let pace = timeInMinutes / distance;
+            let paceMinutes = Math.floor(pace);
+            let paceSeconds = Math.round((pace - paceMinutes) * 60);
+            results += `<div>Time/km: ${paceMinutes}:${paceSeconds.toString().padStart(2, '0')}</div>`;
+            results += `<div>Pace [km/h]: ${(60 / pace).toFixed(2)}</div>`;
+        }
+
+        if (distance > 0 && timePerKm !== "0:0") {
+            let timePerKmInMinutes = parseTimeToMinutes(timePerKm);
+            let pace = 60 / timePerKmInMinutes;
+            results += `<div>Pace [km/h]: ${pace.toFixed(2)}</div>`;
+            let totalTime = timePerKmInMinutes * distance;
+            let totalTimeMinutes = Math.floor(totalTime);
+            let totalTimeSeconds = Math.round((totalTime - totalTimeMinutes) * 60);
+            results += `<div>Total Time: ${Math.floor(totalTimeMinutes / 60)}:${Math.floor(totalTimeMinutes % 60).toString().padStart(2, '0')}:${totalTimeSeconds.toString().padStart(2, '0')}</div>`;
+        }
+
+        if (pace > 0) {
+            let timePerKm = 60 / pace;
+            let timePerKmMinutes = Math.floor(timePerKm);
+            let timePerKmSeconds = Math.round((timePerKm - timePerKmMinutes) * 60);
+            results += `<div>Time/km: ${timePerKmMinutes}:${timePerKmSeconds.toString().padStart(2, '0')}</div>`;
+            let totalTime = timePerKm * distance;
+            let totalTimeMinutes = Math.floor(totalTime);
+            let totalTimeSeconds = Math.round((totalTime - totalTimeMinutes) * 60);
+            results += `<div>Total Time: ${Math.floor(totalTimeMinutes / 60)}:${Math.floor(totalTimeMinutes % 60).toString().padStart(2, '0')}:${totalTimeSeconds.toString().padStart(2, '0')}</div>`;
+        }
+
+        if (results === '') {
+            results = `<div>Please enter any two values to calculate the others.</div>`;
+        }
+
+        document.getElementById('results').innerHTML = results;
+    }
+
+    function clearInputs() {
+        document.getElementById('distance').value = '';
+        document.getElementById('time').value = '';
+        document.getElementById('timePerKm').value = '';
+        document.getElementById('pace').value = '';
+        document.getElementById('results').innerHTML = '';
+    }
+</script>
